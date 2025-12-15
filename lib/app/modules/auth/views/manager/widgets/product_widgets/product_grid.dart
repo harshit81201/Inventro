@@ -80,17 +80,25 @@ class ProductGrid extends StatelessWidget {
           // Keep horizontal layout for larger screens
           return Row(
             children: [
-              Text(
-                'Your Products',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.getFontSize(context, 20),
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                  letterSpacing: 1.2,
+              // FIXED: Wrapped in Flexible to prevent overflow
+              Flexible(
+                child: Text(
+                  'Your Products',
+                  style: TextStyle(
+                    fontSize: ResponsiveUtils.getFontSize(context, 20),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    letterSpacing: 1.2,
+                  ),
+                  overflow: TextOverflow.ellipsis, // Added overflow handling
+                  maxLines: 1,
                 ),
               ),
               SizedBox(width: ResponsiveUtils.getSpacing(context, 12)),
+              
+              // Prevent counter from shrinking too much or causing overflow
               _buildProductCounter(context),
+              
               const Spacer(),
               _buildRefreshButton(context),
             ],

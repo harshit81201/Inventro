@@ -19,4 +19,5 @@ abstract class AppRoutes {
   static const String createCompanyScreen = '/createCompanyScreen';
   static const String managerRegistration = '/managerRegistration';
   static const String aboutUs = '/about-us';
+  static const bulkUpload = '/bulk-upload';
 }

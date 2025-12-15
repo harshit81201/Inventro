@@ -59,6 +59,7 @@ class DashboardActions extends StatelessWidget {
   Widget _buildGridLayout(BuildContext context) {
     return Column(
       children: [
+        // ROW 1: Product Actions (Add & Bulk Upload)
         Row(
           children: [
             Expanded(
@@ -74,17 +75,30 @@ class DashboardActions extends StatelessWidget {
             Expanded(
               child: _buildActionButton(
                 context: context,
+                // INTEGRATION: Navigate to Bulk Upload Route
+                onPressed: () => Get.toNamed(AppRoutes.bulkUpload),
+                icon: Icons.upload_file,
+                label: 'Bulk Upload',
+                backgroundColor: const Color(0xFF00897B), // Teal color for distinction
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: ResponsiveUtils.getSpacing(context, 16)),
+        
+        // ROW 2: Employee Actions (Add & View)
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionButton(
+                context: context,
                 onPressed: () => Get.toNamed(AppRoutes.addEmployee),
                 icon: Icons.person_add_alt_1,
                 label: 'Add Employee',
                 backgroundColor: const Color(0xFF00C3FF),
               ),
             ),
-          ],
-        ),
-        SizedBox(height: ResponsiveUtils.getSpacing(context, 16)),
-        Row(
-          children: [
+            SizedBox(width: ResponsiveUtils.getSpacing(context, 16)),
             Expanded(
               child: _buildActionButton(
                 context: context,
@@ -94,7 +108,13 @@ class DashboardActions extends StatelessWidget {
                 backgroundColor: const Color(0xFF8F00FF),
               ),
             ),
-            SizedBox(width: ResponsiveUtils.getSpacing(context, 16)),
+          ],
+        ),
+        SizedBox(height: ResponsiveUtils.getSpacing(context, 16)),
+
+        // ROW 3: Misc / Future Features
+        Row(
+          children: [
             Expanded(
               child: _buildOutlinedButton(
                 context: context,
@@ -115,6 +135,7 @@ class DashboardActions extends StatelessWidget {
   Widget _buildVerticalLayout(BuildContext context) {
     return Column(
       children: [
+        // 1. Add Product
         _buildActionButton(
           context: context,
           onPressed: () => Get.toNamed(AppRoutes.addProduct),
@@ -123,6 +144,18 @@ class DashboardActions extends StatelessWidget {
           backgroundColor: const Color(0xFF4A00E0),
         ),
         SizedBox(height: ResponsiveUtils.getSpacing(context, 12)),
+
+        // 2. Bulk Upload (INTEGRATION)
+        _buildActionButton(
+          context: context,
+          onPressed: () => Get.toNamed(AppRoutes.bulkUpload),
+          icon: Icons.upload_file,
+          label: 'Bulk Upload',
+          backgroundColor: const Color(0xFF00897B),
+        ),
+        SizedBox(height: ResponsiveUtils.getSpacing(context, 12)),
+
+        // 3. Add Employee
         _buildActionButton(
           context: context,
           onPressed: () => Get.toNamed(AppRoutes.addEmployee),
@@ -131,6 +164,8 @@ class DashboardActions extends StatelessWidget {
           backgroundColor: const Color(0xFF00C3FF),
         ),
         SizedBox(height: ResponsiveUtils.getSpacing(context, 12)),
+
+        // 4. View Employees
         _buildActionButton(
           context: context,
           onPressed: () => Get.toNamed(AppRoutes.employeeList),
@@ -139,6 +174,8 @@ class DashboardActions extends StatelessWidget {
           backgroundColor: const Color(0xFF8F00FF),
         ),
         SizedBox(height: ResponsiveUtils.getSpacing(context, 12)),
+
+        // 5. Assign Task
         _buildOutlinedButton(
           context: context,
           onPressed: () => SafeNavigation.safeSnackbar(

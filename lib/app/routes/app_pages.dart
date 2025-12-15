@@ -15,6 +15,8 @@ import '../modules/auth/views/manager/create_company_screen.dart';
 import '../modules/auth/views/manager/manager_registration_screen.dart';
 import '../modules/about_us/about_us_page.dart';
 // FIXED: Import all lazy bindings
+import '../modules/auth/views/manager/bulk_upload_screen.dart';
+import '../modules/auth/bindings/bulk_upload_binding.dart';
 import '../modules/auth/bindings/dashboard_binding.dart';
 import '../modules/auth/bindings/employee_list_binding.dart';
 import '../modules/auth/bindings/add_product_binding.dart';
@@ -104,6 +106,12 @@ class AppPages {
       name: AppRoutes.employeeList,
       page: () => EmployeeListScreen(),
       binding: EmployeeListBinding(), // Lazy loading
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.bulkUpload,
+      page: () => const BulkUploadScreen(),
+      binding: BulkUploadBinding(),
       middlewares: [AuthMiddleware()],
     ),
 
