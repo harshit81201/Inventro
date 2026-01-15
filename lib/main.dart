@@ -6,8 +6,11 @@ import 'package:inventro/app/modules/auth/controller/auth_controller.dart';
 import 'package:inventro/app/modules/auth/controller/dashboard_controller.dart';
 import 'package:inventro/app/data/services/session_recovery_service.dart';
 
+import 'app/data/services/auth_service.dart';
+
 void main() {
   // Initialize controllers and services
+  Get.put(AuthService());
   Get.put(AuthController());
   Get.put(DashboardController(), permanent: true); // Permanent to keep it alive across sessions
   Get.put(SessionRecoveryService()); // Initialize session recovery service

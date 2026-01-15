@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:inventro/app/routes/app_routes.dart';
+// IMPORTANT: Ensure this route is defined in your app_routes.dart
+// import 'package:inventro/app/routes/app_routes.dart'; 
 import 'package:inventro/app/utils/responsive_utils.dart';
 import 'package:inventro/app/utils/safe_navigation.dart';
 
@@ -65,7 +66,7 @@ class DashboardActions extends StatelessWidget {
             Expanded(
               child: _buildActionButton(
                 context: context,
-                onPressed: () => Get.toNamed(AppRoutes.addProduct),
+                onPressed: () => Get.toNamed('/add-product'), // Use AppRoutes.addProduct
                 icon: Icons.add_box,
                 label: 'Add Product',
                 backgroundColor: const Color(0xFF4A00E0),
@@ -75,8 +76,7 @@ class DashboardActions extends StatelessWidget {
             Expanded(
               child: _buildActionButton(
                 context: context,
-                // INTEGRATION: Navigate to Bulk Upload Route
-                onPressed: () => Get.toNamed(AppRoutes.bulkUpload),
+                onPressed: () => Get.toNamed('/bulk-upload'), // Use AppRoutes.bulkUpload
                 icon: Icons.upload_file,
                 label: 'Bulk Upload',
                 backgroundColor: const Color(0xFF00897B), // Teal color for distinction
@@ -92,7 +92,7 @@ class DashboardActions extends StatelessWidget {
             Expanded(
               child: _buildActionButton(
                 context: context,
-                onPressed: () => Get.toNamed(AppRoutes.addEmployee),
+                onPressed: () => Get.toNamed('/add-employee'), // Use AppRoutes.addEmployee
                 icon: Icons.person_add_alt_1,
                 label: 'Add Employee',
                 backgroundColor: const Color(0xFF00C3FF),
@@ -102,7 +102,7 @@ class DashboardActions extends StatelessWidget {
             Expanded(
               child: _buildActionButton(
                 context: context,
-                onPressed: () => Get.toNamed(AppRoutes.employeeList),
+                onPressed: () => Get.toNamed('/employee-list'), // Use AppRoutes.employeeList
                 icon: Icons.people,
                 label: 'View Employees',
                 backgroundColor: const Color(0xFF8F00FF),
@@ -112,18 +112,15 @@ class DashboardActions extends StatelessWidget {
         ),
         SizedBox(height: ResponsiveUtils.getSpacing(context, 16)),
 
-        // ROW 3: Misc / Future Features
+        // ROW 3: Audit Logs (Replaced Assign Task)
         Row(
           children: [
             Expanded(
               child: _buildOutlinedButton(
                 context: context,
-                onPressed: () => SafeNavigation.safeSnackbar(
-                  title: 'Coming Soon', 
-                  message: 'Assign Task feature coming soon!'
-                ),
-                icon: Icons.assignment,
-                label: 'Assign Task',
+                onPressed: () => Get.toNamed('/audit-logs'), // New Audit Route
+                icon: Icons.history_edu, // Audit/History icon
+                label: 'Audit Logs',
               ),
             ),
           ],
@@ -138,17 +135,17 @@ class DashboardActions extends StatelessWidget {
         // 1. Add Product
         _buildActionButton(
           context: context,
-          onPressed: () => Get.toNamed(AppRoutes.addProduct),
+          onPressed: () => Get.toNamed('/add-product'),
           icon: Icons.add_box,
           label: 'Add Product',
           backgroundColor: const Color(0xFF4A00E0),
         ),
         SizedBox(height: ResponsiveUtils.getSpacing(context, 12)),
 
-        // 2. Bulk Upload (INTEGRATION)
+        // 2. Bulk Upload
         _buildActionButton(
           context: context,
-          onPressed: () => Get.toNamed(AppRoutes.bulkUpload),
+          onPressed: () => Get.toNamed('/bulk-upload'),
           icon: Icons.upload_file,
           label: 'Bulk Upload',
           backgroundColor: const Color(0xFF00897B),
@@ -158,7 +155,7 @@ class DashboardActions extends StatelessWidget {
         // 3. Add Employee
         _buildActionButton(
           context: context,
-          onPressed: () => Get.toNamed(AppRoutes.addEmployee),
+          onPressed: () => Get.toNamed('/add-employee'),
           icon: Icons.person_add_alt_1,
           label: 'Add Employee',
           backgroundColor: const Color(0xFF00C3FF),
@@ -168,22 +165,19 @@ class DashboardActions extends StatelessWidget {
         // 4. View Employees
         _buildActionButton(
           context: context,
-          onPressed: () => Get.toNamed(AppRoutes.employeeList),
+          onPressed: () => Get.toNamed('/employee-list'),
           icon: Icons.people,
           label: 'View Employees',
           backgroundColor: const Color(0xFF8F00FF),
         ),
         SizedBox(height: ResponsiveUtils.getSpacing(context, 12)),
 
-        // 5. Assign Task
+        // 5. Audit Logs (Replaced Assign Task)
         _buildOutlinedButton(
           context: context,
-          onPressed: () => SafeNavigation.safeSnackbar(
-            title: 'Coming Soon', 
-            message: 'Assign Task feature coming soon!'
-          ),
-          icon: Icons.assignment,
-          label: 'Assign Task',
+          onPressed: () => Get.toNamed('/audit-logs'),
+          icon: Icons.history_edu,
+          label: 'Audit Logs',
         ),
       ],
     );

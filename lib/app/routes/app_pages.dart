@@ -10,6 +10,7 @@ import 'package:inventro/app/modules/auth/views/manager/login_screen.dart';
 import 'package:inventro/app/modules/auth/views/manager/profile_screen.dart';
 import 'package:inventro/app/modules/auth/views/role_selection_screen.dart';
 import 'package:inventro/app/modules/auth/views/splash_screen.dart';
+import '../modules/auth/views/manager/audit_logs_screen.dart';
 import '../modules/auth/views/manager/company_creation_page.dart';
 import '../modules/auth/views/manager/create_company_screen.dart';
 import '../modules/auth/views/manager/manager_registration_screen.dart';
@@ -31,10 +32,7 @@ class AppPages {
 
   static final pages = [
     // Public routes (no middleware)
-    GetPage(
-      name: AppRoutes.splash,
-      page: () => const SplashScreen(),
-    ),
+    GetPage(name: AppRoutes.splash, page: () => const SplashScreen()),
     GetPage(
       name: AppRoutes.roleSelection,
       page: () => const RoleSelectionScreen(),
@@ -114,6 +112,12 @@ class AppPages {
       binding: BulkUploadBinding(),
       middlewares: [AuthMiddleware()],
     ),
+    GetPage(
+      name: AppRoutes.auditLogs,
+      page: () => AuditLogsScreen(),
+      // binding: AuditLogsBinding(), // Lazy loading
+      middlewares: [AuthMiddleware()],
+    ),
 
     // FIXED: Protected employee routes with lazy bindings - NEW MODULAR DASHBOARD
     GetPage(
@@ -124,9 +128,6 @@ class AppPages {
     ),
 
     // About Us route - accessible to both authenticated and non-authenticated users
-    GetPage(
-      name: AppRoutes.aboutUs,
-      page: () => const AboutUsPage(),
-    ),
+    GetPage(name: AppRoutes.aboutUs, page: () => const AboutUsPage()),
   ];
 }

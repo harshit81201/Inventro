@@ -38,7 +38,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
               UnifiedDashboardCard(authController: authController),
               const DashboardSectionDivider(),
               
-              // Quick Actions
+              // Quick Actions (Now contains the "Audit Logs" button)
               const DashboardActions(),
               const DashboardSectionDivider(),
               

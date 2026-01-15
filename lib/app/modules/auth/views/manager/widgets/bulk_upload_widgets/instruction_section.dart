@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../controller/bulk_upload_controller.dart';
 import 'glass_card.dart';
 
-class InstructionSection extends StatelessWidget {
+class InstructionSection extends GetView<BulkUploadController> {
   const InstructionSection({super.key});
 
   @override
@@ -40,13 +41,14 @@ class InstructionSection extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: _showSampleFormatDialog,
-              icon: const Icon(Icons.download, size: 18),
-              label: const Text("View Sample Format"),
+              // ⚡️ UPDATED: Now calls the download method
+              onPressed: () => controller.downloadSampleFile(),
+              icon: const Icon(Icons.download_rounded, size: 20),
+              label: const Text("Download Sample CSV"),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF4A00E0),
                 side: const BorderSide(color: Color(0xFF4A00E0)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
@@ -69,50 +71,6 @@ class InstructionSection extends StatelessWidget {
           Expanded(child: Text(text, style: const TextStyle(color: Colors.black87))),
         ],
       ),
-    );
-  }
-
-  void _showSampleFormatDialog() {
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("CSV Header Format", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(12),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
-                ),
-                child: const SelectableText(
-                  "product_name,product_type,quantity,location,price,expiry",
-                  style: TextStyle(fontFamily: 'monospace', fontSize: 13),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Get.back(), 
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A00E0),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text("Got it", style: TextStyle(color: Colors.white)),
-                ),
-              )
-            ],
-          ),
-        ),
-      )
     );
   }
 }
