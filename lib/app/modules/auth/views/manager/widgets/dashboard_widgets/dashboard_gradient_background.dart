@@ -21,6 +21,8 @@ class DashboardGradientBackground extends StatelessWidget {
     ];
 
     return Container(
+      width: double.infinity,
+      height: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,

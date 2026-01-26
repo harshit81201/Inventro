@@ -3,7 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart'; // Import this
+import 'package:permission_handler/permission_handler.dart';
 import 'package:inventro/app/data/models/bulk_upload_result.dart';
 import 'package:inventro/app/data/services/product_service.dart';
 import 'package:inventro/app/utils/safe_controller_base.dart';
@@ -26,48 +26,35 @@ class BulkUploadController extends SafeControllerBase {
   // 📥 DOWNLOAD SAMPLE CSV LOGIC
   // ---------------------------------------------------------------------------
   Future<void> downloadSampleFile() async {
-    // 1. Define the CSV Content with ALL parameters (Required + Optional)
-    // We use snake_case headers to match the API documentation requirements.
+    // Standard CSV content matching backend requirements
     const String csvContent = 
         "product_name,product_type,quantity,location,serial_number,batch_number,lot_number,expiry,condition,price,payment_status,receiver,receiver_contact,remark\n"
         "iPhone 14,Smartphone,10,Warehouse A,SN001,BATCH001,LOT001,2025-12-31,New,999.99,Paid,John Doe,1234567890,Premium stock item";
 
     try {
       if (Platform.isAndroid) {
-        // Request storage permission on Android
         var status = await Permission.storage.request();
-        // On Android 11+ (SDK 30+), storage permission might be restricted, 
-        // but we can often write to app directories or use Manage External Storage if strictly needed.
-        // For simplicity, we check if we can write.
         if (status.isDenied) {
-           // Try to request manage external storage if on Android 11+ and strictly needed,
-           // or just show error. For now, let's proceed to try writing to public downloads.
+          print("Storage permission denied, attempting scoped storage write...");
         }
       }
 
-      // 2. Get the Directory
       Directory? directory;
       if (Platform.isAndroid) {
-        // Targeted path for Android Downloads
         directory = Directory('/storage/emulated/0/Download');
-        // Fallback if that path doesn't exist
         if (!await directory.exists()) {
           directory = await getExternalStorageDirectory();
         }
       } else {
-        // iOS/Other
         directory = await getApplicationDocumentsDirectory();
       }
 
       if (directory != null) {
-        // 3. Create the File
         final String path = "${directory.path}/inventro_sample_upload.csv";
         final File file = File(path);
         
-        // 4. Write Content
         await file.writeAsString(csvContent);
 
-        // 5. Feedback
         showSafeSnackbar(
           title: "Download Complete",
           message: "Saved to: $path",
@@ -87,8 +74,9 @@ class BulkUploadController extends SafeControllerBase {
     }
   }
 
-  // ... (Keep existing pickCsvFile, removeFile, uploadFile, resetUI methods as they were)
-  
+  // ---------------------------------------------------------------------------
+  // 📂 FILE PICKER LOGIC
+  // ---------------------------------------------------------------------------
   void pickCsvFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -109,6 +97,7 @@ class BulkUploadController extends SafeControllerBase {
         fileName.value = result.files.single.name;
         fileSize.value = "${(sizeInBytes / 1024).toStringAsFixed(2)} KB";
         
+        // Reset previous results
         isSuccess.value = false;
         uploadResult.value = null;
       }
@@ -128,6 +117,9 @@ class BulkUploadController extends SafeControllerBase {
     fileSize.value = '';
   }
 
+  // ---------------------------------------------------------------------------
+  // 🚀 UPLOAD LOGIC (Direct Upload - No Sanitization)
+  // ---------------------------------------------------------------------------
   void uploadFile() async {
     if (selectedFile.value == null) {
       showValidationError("Please select a CSV file first");
@@ -137,12 +129,33 @@ class BulkUploadController extends SafeControllerBase {
     isLoading.value = true;
 
     try {
+      // Direct upload: We send the file exactly as chosen by the user.
+      // The backend now handles type coercion (e.g., '123' -> "123").
       final response = await _productService.uploadBulkProducts(
         selectedFile.value!,
         duplicateAction.value,
       );
 
-      final result = BulkUploadResult.fromJson(response);
+      // Parse the response
+      BulkUploadResult result = BulkUploadResult.fromJson(response);
+      
+      // ✨ HUMAN LANGUAGE FIX: Clean up error messages before displaying
+      if (result.failedRecords > 0 && result.errorDetails.isNotEmpty) {
+        final cleanedErrors = _cleanErrorMessages(result.errorDetails);
+        
+        // Create a new result object with cleaned errors (since fields are final)
+        result = BulkUploadResult(
+          id: result.id,
+          status: result.status,
+          totalRecords: result.totalRecords,
+          successfulRecords: result.successfulRecords,
+          failedRecords: result.failedRecords,
+          skippedRecords: result.skippedRecords,
+          updatedRecords: result.updatedRecords,
+          errorDetails: cleanedErrors,
+        );
+      }
+
       uploadResult.value = result;
       isSuccess.value = true;
       
@@ -156,10 +169,10 @@ class BulkUploadController extends SafeControllerBase {
     } catch (e) {
       showSafeSnackbar(
         title: "Upload Failed",
-        message: e.toString().replaceAll('Exception:', '').trim(),
+        message: _cleanSingleErrorMessage(e.toString()),
         backgroundColor: Colors.red.withOpacity(0.1),
         colorText: Colors.red[800],
-        duration: const Duration(seconds: 4),
+        duration: const Duration(seconds: 5),
       );
     } finally {
       isLoading.value = false;
@@ -171,5 +184,31 @@ class BulkUploadController extends SafeControllerBase {
     isSuccess.value = false;
     uploadResult.value = null;
     duplicateAction.value = 'skip';
+  }
+
+  // ---------------------------------------------------------------------------
+  // 🧹 ERROR CLEANING UTILITIES (For "Human Language" UI)
+  // ---------------------------------------------------------------------------
+  
+  /// Cleans a list of backend error strings to be more user-friendly
+  List<String> _cleanErrorMessages(List<String> errors) {
+    return errors.map((e) => _cleanSingleErrorMessage(e)).toList();
+  }
+
+  /// Removes technical jargon (URLs, internal codes) from error strings
+  String _cleanSingleErrorMessage(String error) {
+    // Remove "Exception:" prefix if present
+    String cleaned = error.replaceAll('Exception:', '');
+
+    // Remove Pydantic URLs (e.g., "For further information visit https://...")
+    cleaned = cleaned.replaceAll(RegExp(r'For further information visit https://\S+'), '');
+
+    // Remove technical type indicators (e.g., "[type=string_type, input_value=...]")
+    cleaned = cleaned.replaceAll(RegExp(r'\[.*?\]'), '');
+
+    // Remove specific validation codes if they appear messy (optional)
+    cleaned = cleaned.replaceAll('CSVProductRow', 'Row Data');
+
+    return cleaned.trim();
   }
 }
