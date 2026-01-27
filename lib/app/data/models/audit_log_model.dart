@@ -7,6 +7,9 @@ class AuditLogModel {
   final String? companyId;
   final String? productUniqueId;
   final DateTime? createdAt;
+  
+  // 🌟 NEW FIELD: Manager Name from API
+  final String? managerName; 
 
   AuditLogModel({
     this.id,
@@ -17,6 +20,7 @@ class AuditLogModel {
     this.companyId,
     this.productUniqueId,
     this.createdAt,
+    this.managerName,
   });
 
   factory AuditLogModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +32,8 @@ class AuditLogModel {
       changedBy: json['changed_by'],
       companyId: json['company_id'],
       productUniqueId: json['product_unique_id'],
+      // 🌟 Map manager_name from API
+      managerName: json['manager_name'], 
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : null,

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// IMPORTANT: Ensure this route is defined in your app_routes.dart
-// import 'package:inventro/app/routes/app_routes.dart'; 
 import 'package:inventro/app/utils/responsive_utils.dart';
-import 'package:inventro/app/utils/safe_navigation.dart';
 
 class DashboardActions extends StatelessWidget {
   const DashboardActions({super.key});

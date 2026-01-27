@@ -171,23 +171,37 @@ class ProductService {
         // If legacy fails, we consider it a critical error
         throw _handleHttpError(legacyResponse, 'fetch products');
       }
-
+      
       // 4. Map & Merge New Products
       if (newProductsList.isNotEmpty) {
         print('🔄 Merging ${newProductsList.length} new products into main list...');
         for (var newProduct in newProductsList) {
-          // Normalize the "New Product" structure to match the "Legacy Product" model
-          // This ensures the UI works without needing changes
           combinedList.add({
-            "id": newProduct['product_id'] ?? 0, // Generated ID
-            "part_number": newProduct['product_name'] ?? "Unknown Name", // Map Name -> Part Number (Header)
-            "description": newProduct['product_type'] ?? "", // Map Type -> Description (Subtitle)
+            // 🛑 CRITICAL FIX: Ensure ID is captured. Use 'id' OR 'product_id'
+            "id": newProduct['id'] ?? newProduct['product_id'] ?? 0, 
+            
+            // Map Basic Fields
+            "part_number": newProduct['product_name'] ?? "Unknown",
+            "description": newProduct['product_type'] ?? "",
             "location": newProduct['location'] ?? "Unknown",
             "quantity": newProduct['quantity'] ?? 0,
             "batch_number": newProduct['batch_number'] ?? "",
-            "expiry_date": newProduct['expiry'],
-            "is_bulk_uploaded": true, // Flag for debugging/UI if needed
+            "expiry_date": newProduct['expiry'] ?? newProduct['expiry_date'],
+            "company_id": newProduct['company_id'] ?? "",
             "created_at": newProduct['created_at'],
+            
+            // Flag
+            "is_bulk_uploaded": true,
+
+            // 🌟 Map NEW CSV Fields (The ones missing in dialog)
+            "serial_number": newProduct['serial_number'],
+            "lot_number": newProduct['lot_number'],
+            "condition": newProduct['condition'],
+            "price": newProduct['price'],
+            "payment_status": newProduct['payment_status'],
+            "receiver": newProduct['receiver'],
+            "receiver_contact": newProduct['receiver_contact'],
+            "remark": newProduct['remark'],
           });
         }
       }
@@ -304,7 +318,11 @@ class ProductService {
     }
   }
 
-  // UPDATE PRODUCT (Legacy)
+  // ---------------------------------------------------------------------------
+  // ✏️ UPDATE PRODUCT (Handles Both Legacy & New)
+  // ---------------------------------------------------------------------------
+  
+  // Update Legacy Product
   Future<Map<String, dynamic>> updateProduct(int productId, Map<String, dynamic> productData) async {
     try {
       final uri = Uri.parse(path.join(baseUrl, 'products', productId.toString()).replaceAll('\\', '/'));
@@ -334,7 +352,42 @@ class ProductService {
     }
   }
 
-  // DELETE PRODUCT (Legacy)
+  // Update New Product (CSV Uploaded)
+  Future<Map<String, dynamic>> updateNewProduct(int productId, Map<String, dynamic> productData) async {
+    try {
+      final uri = Uri.parse(path.join(baseUrl, 'new-products', productId.toString()).replaceAll('\\', '/'));
+      final authHeaders = await getAuthHeaders();
+      
+      // New API expects different key names (snake_case from CSV)
+      final payload = {
+        "product_name": productData['part_number'], // Maps Part Number -> Product Name
+        "product_type": productData['description'], // Maps Description -> Product Type
+        "location": productData['location'],
+        "quantity": productData['quantity'],
+        "batch_number": productData['batch_number'],
+        "expiry": productData['expiry_date'], // Note: 'expiry' not 'expiry_date'
+      };
+
+      final response = await http.put(
+          uri, headers: {...authHeaders, 'Content-Type': 'application/json'},
+          body: jsonEncode(payload)
+      );
+
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body, response.statusCode);
+      } else {
+        throw _handleHttpError(response, 'update new product');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 🗑️ DELETE PRODUCT (Handles Both Legacy & New)
+  // ---------------------------------------------------------------------------
+
+  // Delete Legacy Product
   Future<bool> deleteProduct(int productId) async {
     try {
       final uri = Uri.parse(path.join(baseUrl, 'products', productId.toString()).replaceAll('\\', '/'));
@@ -345,6 +398,23 @@ class ProductService {
         return true;
       } else {
         throw _handleHttpError(response, 'delete product');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Delete New Product (CSV Uploaded)
+  Future<bool> deleteNewProduct(int productId) async {
+    try {
+      final uri = Uri.parse(path.join(baseUrl, 'new-products', productId.toString()).replaceAll('\\', '/'));
+      final authHeaders = await getAuthHeaders();
+      final response = await http.delete(uri, headers: authHeaders);
+
+      if ([200, 202, 204].contains(response.statusCode)) {
+        return true;
+      } else {
+        throw _handleHttpError(response, 'delete new product');
       }
     } catch (e) {
       rethrow;

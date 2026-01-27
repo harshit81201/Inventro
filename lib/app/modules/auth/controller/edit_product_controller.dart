@@ -141,8 +141,13 @@ class EditProductController extends GetxController {
   void _setExpiryDateField() {
     try {
       if (currentProduct!.expiryDate.isNotEmpty) {
-        final dateTime = DateTime.parse(currentProduct!.expiryDate);
-        expiryDateController.text = "${dateTime.day}/${dateTime.month}/${dateTime.year}";
+        // Handle both ISO (YYYY-MM-DD) and slash (DD/MM/YYYY) formats
+        if (currentProduct!.expiryDate.contains('-')) {
+           final dateTime = DateTime.parse(currentProduct!.expiryDate);
+           expiryDateController.text = "${dateTime.day}/${dateTime.month}/${dateTime.year}";
+        } else {
+           expiryDateController.text = currentProduct!.expiryDate;
+        }
       } else {
         _setTomorrowAsExpiryDate();
       }
@@ -219,7 +224,9 @@ class EditProductController extends GetxController {
     }
   }
 
-  /// Updates the product with validation and error handling
+  // ---------------------------------------------------------------------------
+  // 🔄 UPDATED: UPDATE LOGIC (Handles Both APIs)
+  // ---------------------------------------------------------------------------
   Future<void> updateProduct() async {
     if (_isDisposed || currentProduct == null) {
       print('❌ Cannot update: controller disposed or product is null');
@@ -231,10 +238,26 @@ class EditProductController extends GetxController {
     try {
       _setLoadingState(true);
       
-      final productData = _buildUpdateData();
-      print('🔄 Updating product data: $productData');
+      final Map<String, dynamic> updateData = {
+        'part_number': partNumberController.text.trim(),
+        'description': descriptionController.text.trim(),
+        'location': locationController.text.trim(),
+        'quantity': int.tryParse(quantityController.text.trim()) ?? 0,
+        'batch_number': batchNumberController.text.trim(),
+        'expiry_date': _formatDateForBackend(expiryDateController.text.trim()),
+      };
 
-      await _submitUpdateToBackend(productData);
+      print('🔄 Updating product: $updateData');
+
+      // 🔍 ROUTING LOGIC: Check where the product belongs
+      if (currentProduct!.isBulkUploaded) {
+        print('📡 Sending to NEW API (CSV Product)');
+        await _productService.updateNewProduct(currentProduct!.id!, updateData);
+      } else {
+        print('📡 Sending to LEGACY API (Manual Product)');
+        await _productService.updateProduct(currentProduct!.id!, updateData);
+      }
+
       await _handleSuccessfulUpdate();
       
     } catch (e) {
@@ -341,29 +364,6 @@ class EditProductController extends GetxController {
 
   // ==================== UPDATE METHODS ====================
 
-  /// Builds product data for update API call
-  Map<String, dynamic> _buildUpdateData() {
-    final formattedExpiryDate = _formatDateForBackend(expiryDateController.text.trim());
-    
-    print('🗓️ Original date: ${expiryDateController.text.trim()}');
-    print('🗓️ Formatted for backend: $formattedExpiryDate');
-    
-    return {
-      'part_number': partNumberController.text.trim(),
-      'description': descriptionController.text.trim(),
-      'location': locationController.text.trim(),
-      'quantity': int.tryParse(quantityController.text.trim()) ?? 0,
-      'batch_number': int.tryParse(batchNumberController.text.trim()) ?? 0,
-      'expiry_date': formattedExpiryDate,
-    };
-  }
-
-  /// Submits update data to backend with timeout
-  Future<void> _submitUpdateToBackend(Map<String, dynamic> productData) async {
-    await _productService.updateProduct(currentProduct!.id!, productData)
-        .timeout(const Duration(seconds: 45));
-  }
-
   /// Handles successful product update
   Future<void> _handleSuccessfulUpdate() async {
     if (_isDisposed) return;
@@ -395,7 +395,7 @@ class EditProductController extends GetxController {
       print('❌ Error updating dashboard: $e');
     }
     
-    Get.offAllNamed('/dashboard');
+    Get.offAllNamed(AppRoutes.dashboard);
   }
 
   /// Creates updated ProductModel from current form data
@@ -405,7 +405,7 @@ class EditProductController extends GetxController {
       description: descriptionController.text.trim(),
       location: locationController.text.trim(),
       quantity: int.tryParse(quantityController.text.trim()) ?? 0,
-      batchNumber: int.tryParse(batchNumberController.text.trim()) ?? 0,
+      batchNumber: batchNumberController.text.trim(), // Keep as string or int depending on model
       expiryDate: _formatDateForBackend(expiryDateController.text.trim()),
       updatedAt: DateTime.now().toIso8601String(),
     );
@@ -478,9 +478,11 @@ class EditProductController extends GetxController {
 
   /// Validates batch number field
   bool _validateBatchNumber() {
-    final batchNumber = int.tryParse(batchNumberController.text.trim());
-    if (batchNumber == null || batchNumber < 0) {
-      _showValidationError('Please enter a valid batch number (0 or greater)');
+    // Note: If batch number is alphanumeric, this validation might need adjustment
+    // But keeping logic consistent with your original code
+    final batchNumber = batchNumberController.text.trim();
+    if (batchNumber.isEmpty) {
+      _showValidationError('Please enter a valid batch number');
       return false;
     }
     return true;

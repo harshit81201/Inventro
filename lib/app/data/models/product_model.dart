@@ -2,15 +2,26 @@ import 'package:intl/intl.dart';
 
 class ProductModel {
   final int? id;
-  final String partNumber;
-  final String description;
+  final String partNumber; // product_name
+  final String description; // product_type
   final String location;
   final int quantity;
-  final int batchNumber;
+  final String batchNumber; // Treated as String to handle "BATCH001"
   final String expiryDate;
   final String companyId;
   final String? createdAt;
   final String? updatedAt;
+  final bool isBulkUploaded;
+
+  // 🌟 NEW CSV FIELDS
+  final String? serialNumber;
+  final String? lotNumber;
+  final String? condition;
+  final double? price;
+  final String? paymentStatus;
+  final String? receiver;
+  final String? receiverContact;
+  final String? remark;
 
   ProductModel({
     this.id,
@@ -23,28 +34,58 @@ class ProductModel {
     required this.companyId,
     this.createdAt,
     this.updatedAt,
+    this.isBulkUploaded = false,
+    // Initialize new fields
+    this.serialNumber,
+    this.lotNumber,
+    this.condition,
+    this.price,
+    this.paymentStatus,
+    this.receiver,
+    this.receiverContact,
+    this.remark,
   });
 
-  // Create ProductModel from JSON (from backend) with improved null safety
+  // Create ProductModel from JSON
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     try {
       return ProductModel(
-        id: _safeParseInt(json['id']),
+        // Map 'id' OR 'product_id' (handles both Legacy & New API)
+        id: _safeParseInt(json['id'] ?? json['product_id']),
         partNumber: _safeParseString(json['part_number']) ?? '',
         description: _safeParseString(json['description']) ?? '',
         location: _safeParseString(json['location']) ?? '',
         quantity: _safeParseInt(json['quantity']) ?? 0,
-        batchNumber: _safeParseInt(json['batch_number']) ?? 0,
-        expiryDate: _safeParseDate(json['expiry_date']),
+        batchNumber: json['batch_number']?.toString() ?? '',
+        expiryDate: _safeParseDate(json['expiry_date'] ?? json['expiry']),
         companyId: _safeParseString(json['company_id']) ?? '',
         createdAt: _safeParseString(json['created_at'], allowNull: true),
         updatedAt: _safeParseString(json['updated_on'] ?? json['updated_at'], allowNull: true),
+        isBulkUploaded: json['is_bulk_uploaded'] ?? false,
+        
+        // 🌟 Map New CSV Fields
+        serialNumber: _safeParseString(json['serial_number'], allowNull: true),
+        lotNumber: _safeParseString(json['lot_number'], allowNull: true),
+        condition: _safeParseString(json['condition'], allowNull: true),
+        price: _safeParseDouble(json['price']),
+        paymentStatus: _safeParseString(json['payment_status'], allowNull: true),
+        receiver: _safeParseString(json['receiver'], allowNull: true),
+        receiverContact: _safeParseString(json['receiver_contact'], allowNull: true),
+        remark: _safeParseString(json['remark'], allowNull: true),
       );
     } catch (e) {
       print('❌ Error creating ProductModel from JSON: $e');
-      print('📋 JSON data: $json');
       rethrow;
     }
+  }
+
+  // Helper for Double (Price)
+  static double? _safeParseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value.trim());
+    return null;
   }
 
   // Helper method to safely parse strings
@@ -61,16 +102,13 @@ class ProductModel {
     if (value == null) return null;
     if (value is int) return value;
     if (value is double) return value.toInt();
-    if (value is String) {
-      return int.tryParse(value.trim());
-    }
+    if (value is String) return int.tryParse(value.trim());
     return null;
   }
 
   // Helper method to safely parse and validate dates
   static String _safeParseDate(dynamic value) {
     if (value == null) {
-      // Return tomorrow's date as default if no date provided
       final tomorrow = DateTime.now().add(const Duration(days: 1));
       return tomorrow.toIso8601String().split('T')[0];
     }
@@ -81,15 +119,10 @@ class ProductModel {
       return tomorrow.toIso8601String().split('T')[0];
     }
     
-    // Try to parse various date formats
     try {
-      // ISO format (YYYY-MM-DD)
       if (RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(dateStr)) {
-        DateTime.parse(dateStr); // Validate the date
-        return dateStr.split('T')[0]; // Remove time component if present
+        return dateStr.split('T')[0];
       }
-      
-      // DD/MM/YYYY format
       if (RegExp(r'^\d{1,2}/\d{1,2}/\d{4}$').hasMatch(dateStr)) {
         final parts = dateStr.split('/');
         if (parts.length == 3) {
@@ -100,11 +133,8 @@ class ProductModel {
           return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
         }
       }
-      
-      // If we can't parse it, try DateTime.parse as last resort
       final parsed = DateTime.parse(dateStr);
       return '${parsed.year}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
-      
     } catch (e) {
       print('⚠️ Warning: Could not parse date "$dateStr", using tomorrow as default');
       final tomorrow = DateTime.now().add(const Duration(days: 1));
@@ -125,93 +155,88 @@ class ProductModel {
       'company_id': companyId,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      'is_bulk_uploaded': isBulkUploaded,
+      // Add CSV fields if they exist
+      if (serialNumber != null) 'serial_number': serialNumber,
+      if (lotNumber != null) 'lot_number': lotNumber,
+      if (condition != null) 'condition': condition,
+      if (price != null) 'price': price,
+      if (paymentStatus != null) 'payment_status': paymentStatus,
+      if (receiver != null) 'receiver': receiver,
+      if (receiverContact != null) 'receiver_contact': receiverContact,
+      if (remark != null) 'remark': remark,
     };
   }
 
-  // Helper method to format expiry date for display with error handling
+  // Helper method to format expiry date
   String get formattedExpiryDate {
     try {
       if (expiryDate.isEmpty) return 'No date set';
-      
-      final dateTime = DateTime.parse(expiryDate);
-      return "${dateTime.day}/${dateTime.month}/${dateTime.year}";
+      if (expiryDate.contains('-')) {
+         final dateTime = DateTime.parse(expiryDate);
+         return "${dateTime.day}/${dateTime.month}/${dateTime.year}";
+      }
+      return expiryDate;
     } catch (e) {
-      print('⚠️ Warning: Could not format expiry date "$expiryDate"');
       return expiryDate.isNotEmpty ? expiryDate : 'Invalid date';
     }
   }
 
-  // Helper method to check if product is expired with error handling
+  // Helper method to check if product is expired
   bool get isExpired {
     try {
       if (expiryDate.isEmpty) return false;
-      
       final dateTime = DateTime.parse(expiryDate);
       final now = DateTime.now();
-      // Compare only the date part, not time
       final expiryDateOnly = DateTime(dateTime.year, dateTime.month, dateTime.day);
       final nowDateOnly = DateTime(now.year, now.month, now.day);
-      
       return expiryDateOnly.isBefore(nowDateOnly);
     } catch (e) {
-      print('⚠️ Warning: Could not check expiry for date "$expiryDate"');
-      return false; // Assume not expired if we can't parse the date
-    }
-  }
-
-  // Helper method to check if product is expiring soon (within 7 days, but not expired)
-  bool get isExpiringSoon {
-    try {
-      if (isExpired) return false; // Expired products are not "expiring soon"
-      
-      final days = daysUntilExpiry;
-      return days >= 0 && days <= 7;
-    } catch (e) {
-      print('⚠️ Warning: Could not check expiring soon status');
       return false;
     }
   }
 
-  // Helper method to get days until expiry with error handling
-  int get daysUntilExpiry {
+  // Helper method to check if product is expiring soon
+  bool get isExpiringSoon {
     try {
-      if (expiryDate.isEmpty) return 999; // Large number for "no expiry"
-      
-      final dateTime = DateTime.parse(expiryDate);
-      final now = DateTime.now();
-      // Compare only the date part, not time
-      final expiryDateOnly = DateTime(dateTime.year, dateTime.month, dateTime.day);
-      final nowDateOnly = DateTime(now.year, now.month, now.day);
-      
-      final difference = expiryDateOnly.difference(nowDateOnly);
-      return difference.inDays;
+      if (isExpired) return false;
+      final days = daysUntilExpiry;
+      return days >= 0 && days <= 7;
     } catch (e) {
-      print('⚠️ Warning: Could not calculate days until expiry for date "$expiryDate"');
-      return 999; // Large number indicating unknown/far future
+      return false;
     }
   }
 
-  // Helper method to format created_at for display with error handling
-  String get formattedCreatedAt {
-    if (createdAt == null || createdAt!.isEmpty) {
-      return 'Date added: Not available';
+  // Helper method to get days until expiry
+  int get daysUntilExpiry {
+    try {
+      if (expiryDate.isEmpty) return 999;
+      final dateTime = DateTime.parse(expiryDate);
+      final now = DateTime.now();
+      final expiryDateOnly = DateTime(dateTime.year, dateTime.month, dateTime.day);
+      final nowDateOnly = DateTime(now.year, now.month, now.day);
+      return expiryDateOnly.difference(nowDateOnly).inDays;
+    } catch (e) {
+      return 999;
     }
+  }
 
+  // Helper method to format created_at
+  String get formattedCreatedAt {
+    if (createdAt == null || createdAt!.isEmpty) return 'Date added: Not available';
     try {
       final dateTime = DateTime.parse(createdAt!);
       final formatter = DateFormat.yMMMMd().add_jm();
       return 'Added on: ${formatter.format(dateTime)}';
     } catch (e) {
-      print('⚠️ Warning: Could not format created date "$createdAt"');
       return 'Added on: ${createdAt!}';
     }
   }
 
-  // Helper method to get expiry status with color coding info
+  // Helper method to get expiry status
   String get expiryStatus {
     try {
       if (isExpired) return 'EXPIRED';
-      
       final days = daysUntilExpiry;
       if (days <= 7) return 'EXPIRES SOON';
       if (days <= 30) return 'EXPIRING';
@@ -228,7 +253,7 @@ class ProductModel {
              description.isNotEmpty &&
              location.isNotEmpty &&
              quantity >= 0 &&
-             batchNumber >= 0 &&
+             batchNumber.isNotEmpty &&
              expiryDate.isNotEmpty &&
              companyId.isNotEmpty;
     } catch (e) {
@@ -238,7 +263,7 @@ class ProductModel {
 
   @override
   String toString() {
-    return 'ProductModel(id: $id, partNumber: $partNumber, description: $description, quantity: $quantity, isValid: $isValid)';
+    return 'ProductModel(id: $id, partNumber: $partNumber, description: $description, quantity: $quantity, isBulkUploaded: $isBulkUploaded)';
   }
 
   // Create a copy of the product with updated fields
@@ -248,11 +273,20 @@ class ProductModel {
     String? description,
     String? location,
     int? quantity,
-    int? batchNumber,
+    String? batchNumber,
     String? expiryDate,
     String? companyId,
     String? createdAt,
     String? updatedAt,
+    bool? isBulkUploaded,
+    String? serialNumber,
+    String? lotNumber,
+    String? condition,
+    double? price,
+    String? paymentStatus,
+    String? receiver,
+    String? receiverContact,
+    String? remark,
   }) {
     return ProductModel(
       id: id ?? this.id,
@@ -265,6 +299,15 @@ class ProductModel {
       companyId: companyId ?? this.companyId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isBulkUploaded: isBulkUploaded ?? this.isBulkUploaded,
+      serialNumber: serialNumber ?? this.serialNumber,
+      lotNumber: lotNumber ?? this.lotNumber,
+      condition: condition ?? this.condition,
+      price: price ?? this.price,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      receiver: receiver ?? this.receiver,
+      receiverContact: receiverContact ?? this.receiverContact,
+      remark: remark ?? this.remark,
     );
   }
 }
