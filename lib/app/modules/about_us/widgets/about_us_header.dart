@@ -70,16 +70,6 @@ class AboutUsHeader extends StatelessWidget {
         
         const SizedBox(height: 12),
         
-        // Subtitle
-        Text(
-          'Meet the talented team behind your inventory management solution',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey.shade600,
-            height: 1.5,
-          ),
-        ),
       ],
     );
   }

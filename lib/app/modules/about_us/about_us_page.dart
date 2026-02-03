@@ -3,6 +3,7 @@ import 'package:inventro/app/utils/safe_navigation.dart';
 import 'widgets/about_us_header.dart';
 import 'widgets/team_members_section.dart';
 import 'widgets/company_attribution.dart';
+import 'widgets/company_contact_section.dart';
 
 /// About Us Page - Showcases team members and company attribution
 /// Features clean design with company branding and professional layout
@@ -34,7 +35,7 @@ class AboutUsPage extends StatelessWidget {
               children: [
                 // Custom App Bar
                 _buildAppBar(),
-                
+
                 // Main Content
                 Expanded(
                   child: Container(
@@ -53,17 +54,25 @@ class AboutUsPage extends StatelessWidget {
                           // Header Section
                           AboutUsHeader(gradientColors: gradientColors),
                           const SizedBox(height: 32),
-                          
+
                           // Company Attribution Section (Top)
-                          const CompanyAttribution(position: CompanyAttributionPosition.top),
+                          const CompanyAttribution(
+                            position: CompanyAttributionPosition.top,
+                          ),
                           const SizedBox(height: 32),
-                          
+
                           // Team Members Section
                           const TeamMembersSection(),
                           const SizedBox(height: 32),
-                          
+
+                          // Company Contact Section
+                          const CompanyContactSection(),
+                          const SizedBox(height: 32),
+
                           // Company Attribution Section (Bottom)
-                          const CompanyAttribution(position: CompanyAttributionPosition.bottom),
+                          const CompanyAttribution(
+                            position: CompanyAttributionPosition.bottom,
+                          ),
                           const SizedBox(height: 32),
                         ],
                       ),

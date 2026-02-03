@@ -24,6 +24,12 @@ class TeamMembersSection extends StatelessWidget {
       'icon': Icons.phone_android,
       'color': Color(0xFF8F00FF),
     },
+    {
+      'name': 'Jitesh Rustagi',
+      'role': 'Marketing Head',
+      'icon': Icons.campaign,
+      'color': Color(0xFFFF6B35),
+    },
   ];
 
   @override

@@ -53,7 +53,7 @@ class CompanyAttribution extends StatelessWidget {
           
           // Attribution Text
           const Text(
-            'This app is created by',
+            'Inventro is created by',
             style: TextStyle(
               fontSize: 16,
               color: Colors.white70,
@@ -78,7 +78,7 @@ class CompanyAttribution extends StatelessWidget {
               ],
             ),
             child: const Text(
-              'TecsoHub',
+              'Tecsohub',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
